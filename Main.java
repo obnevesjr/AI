@@ -1,14 +1,15 @@
-import distanceMatrix.*;
-
+import DistanceMatrix.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Random;
 
+
 public class Main {
+
     public static void main(String[] args) {
 
-        String mtr = "/home/porcaontas/IdeaProjects/TP2/src/Distancias.txt";
+        String mtr = "/Users/user/IdeaProjects/tp2/src/Distancias.txt";
         DistanceMatrix dist = new DistanceMatrix(mtr);
         ArrayList<String> c = new ArrayList<String>( dist.getCities() );
 
@@ -22,6 +23,8 @@ public class Main {
 
 class SimAnnealing {
 
+    public static final int init_temp = 2000;
+    public static final int max_iter = 100;
     private int tmp;
     private int n_iter;
     private DistanceMatrix dm;
@@ -68,7 +71,7 @@ class SimAnnealing {
     }
 
     private boolean stop(){
-        return n_iter < 100;
+        return n_iter < max_iter;
     }
 
     private ArrayList<String> create_init_sol(ArrayList<String> cities){
@@ -88,17 +91,31 @@ class SimAnnealing {
 
     private void iterate(){
 
+        int ax = 0,
+            i  = 0,
+            j  = 0;
         //Get 2 values
-        int n1 = (int) ( Math.random() * (current_sol.seq.size() - 1) ) ,
-            n2 = (int) ( Math.random() * (current_sol.seq.size() - 1)) ;
 
+        while( ax == 0 || Math.abs(ax) == 1 ) {
+
+            i = (int) (Math.random() * (current_sol.seq.size() - 1));
+            j = (int) (Math.random() * (current_sol.seq.size() - 1));
+
+            ax = j - i ;//used to compare i and j
+        }
+
+        if (ax < 0) {
+            int a = j;
+            j = i;
+            i = a;
+        }
         //calc cost
 
-        int cost = current_sol.swap_cost( n1,n2 );
+        int cost = current_sol.swap_cost( i,j );
 
         if( cost < 0 ){
             //better
-            current_sol.swap( n1 , n2 );
+            current_sol.swap( i, j, cost );
 
             if( cost < best_sol.cost ){
                 //new best ?
@@ -112,8 +129,7 @@ class SimAnnealing {
 
         if( rand < prob ){
             //accept
-            current_sol.swap( n1 , n2 );
-            current_sol.cost = cost;
+            current_sol.swap( i, j, cost );
         }
     }
 
@@ -124,7 +140,7 @@ class SimAnnealing {
     }
 
     private int init_temp(){
-        return 1500;
+        return init_temp;
     }
 
     private int decay(){
@@ -150,7 +166,7 @@ class SimAnnealing {
 
             return s;
         }
-         public void calc_cost(){
+        public void calc_cost(){
 
             cost = 0;
             String s1,s2;
@@ -164,55 +180,38 @@ class SimAnnealing {
                 s1 = s2;
                 s2 = it.next();
             }
-         }
+        }
+        public int swap_cost( int i, int j ) {
 
-        public int swap_cost( int n1, int n2 ){
+            int j1 = j == ( seq.size() - 1 ) ? 0 : j + 1;
 
-            int ax = n2 - n1;
-            if( ax == 0 || ax == 1 ){
-                return 0;
-            }
-            else if( ax < 0 ){
-                int i = n1;
-                n1 = n2;
-                n2 = i;
-            }
-            //n1;
-
-            int m = n2 == seq.size() - 2 ? 0 : n2 + 1;
-            System.out.println(n1+" "+m);
             return
-                    ( dm.distance( seq.get(n1),seq.get(n2) )
-                            + dm.distance( seq.get(n1+1),seq.get(m) ))
-                    -
-                    ( dm.distance( seq.get(n1),seq.get(n1+1) )
-                            + dm.distance( seq.get(n2),seq.get(m) ));
+                    ( dm.distance( seq.get( i ), seq.get( j ) ) +
+                            dm.distance( seq.get( i + 1 ), seq.get( j1 )))
+                   - ( dm.distance( seq.get( i ), seq.get( i + 1 ) ) +
+                            dm.distance( seq.get( j ), seq.get( j1 ) ));
         }
 
-        public void swap( int n1,int n2 ){
+        public void swap( int i,int j,int c ) {
 
-            if( n1 > n2 ){
-                int i = n1;
-                n1 = n2;
-                n2 = i;
-            }
-
-            for(; n1 < n2 ;++n1,--n2 ){
-                swap_seq( n1,n2 );
+            //System.out.println( "inicial " +cost+" c "+c);
+            cost += c;
+            //System.out.println( "new "+cost);
+            ++i;
+            for( ; i < j; ++i, --j ){
+                swap_seq(i,j);
             }
 
         }
 
-        private void swap_seq( int n1, int n2 ){
+        private void swap_seq( int i, int j ) {
 
-            if( n1 == n2 ){ return; }
-
-            String s = seq.get(n1);
+            String s = seq.get(i);
             seq.set(
-                    n1 ,
-                    seq.get(n2-1));
+                    i ,
+                    seq.get(j));
 
-            seq.set( n2, s );
+            seq.set( j, s );
         }
     }
 }
