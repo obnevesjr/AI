@@ -9,7 +9,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String mtr = "/Users/user/IdeaProjects/tp2/src/Distancias.txt";
+        String mtr = "path";
         DistanceMatrix dist = new DistanceMatrix(mtr);
         ArrayList<String> c = new ArrayList<String>( dist.getCities() );
 
